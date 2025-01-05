@@ -2,6 +2,9 @@
 
 ## Try now: [talentscout-app-abhishekcr448](https://talentscout-app-abhishekcr448.streamlit.app/)
 
+![TalentScout app demo](https://github.com/user-attachments/assets/05a1467e-cba0-4f11-bf33-288821c9c013)
+
+
 ## Hiring Assistant Chatbot
 
 ### Project Overview
