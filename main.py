@@ -5,38 +5,37 @@ from pages.report import report
 from components.call_gpt import check_gpt
 import os
 
+# Fetch OpenAI API Key from environment variable
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Set up page configuration (no sidebar)
+# Set up Streamlit page configuration (no sidebar, wide layout)
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-# if "api_key" not in st.session_state:
-#     st.session_state.api_key = ""
-
-# if "api_key_valid" not in st.session_state:
-#     st.session_state.api_key_valid = False
-
+# Initialize session state for API key if not already present
 if "api_key" not in st.session_state:
     st.session_state.api_key = OPENAI_API_KEY
 
+# Initialize session state for API key validity
 if "api_key_valid" not in st.session_state:
     st.session_state.api_key_valid = True
 
+# If the API key is invalid, prompt the user to enter a valid API key
 if not st.session_state.api_key_valid:
     api_key = st.text_input("Enter your GPT API Key:", type="password")
     if st.button("Submit"):
+        # Check if the provided API key is valid
         if check_gpt(api_key):
             st.session_state.api_key = api_key
             st.session_state.api_key_valid = True
-            st.rerun()
+            st.rerun()  # Rerun the app to proceed with the valid API key
         else:
             st.error("Invalid API Key. Please try again.")
 else:
-    # Initialize session state if it is not set
+    # Initialize session state for page navigation if not already set
     if "page" not in st.session_state:
         st.session_state.page = "main"  # Default to the main page
 
-    # Define page styles
+    # Define custom page styles using Markdown and CSS
     st.markdown(
         """
         <style>
@@ -66,7 +65,7 @@ else:
         unsafe_allow_html=True
     )
 
-    # Display content based on session state
+    # Display content based on the current session state page
     if st.session_state.page == "main":
         # Main page content
         st.markdown("<h1 style='text-align: center;'>Welcome to TalentScout</h1>", unsafe_allow_html=True)
@@ -79,6 +78,7 @@ else:
         <br><br>
         """, unsafe_allow_html=True)
 
+        # Step 1: Submit Details
         st.markdown("<h3 style='text-align: center;'>Step 1: Submit Your Details</h3>", unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: grey;'>
@@ -87,6 +87,7 @@ else:
         <br><br>
         """, unsafe_allow_html=True)
 
+        # Step 2: Attend AI Interview
         st.markdown("<h3 style='text-align: center;'>Step 2: Attend a Brief AI Interview</h3>", unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: grey;'>
@@ -95,23 +96,23 @@ else:
         <br><br>
         """, unsafe_allow_html=True)
 
-        # Button to go to the next page (Extract Details)
+        # Button to navigate to the next page (Extract Details)
         col1, col2, col3 = st.columns([5, 5, 1])
 
         with col2:
             if st.button("Let's Start"):
-                # Set the session state to indicate that the user is on the "extract_details" page
+                # Set session state page to 'extract_details' and rerun the app to switch to the next page
                 st.session_state.page = "extract_details"
-                st.rerun()  # Rerun to switch to the next page
+                st.rerun()
 
     elif st.session_state.page == "extract_details":
-        # Call the extract_details function when the page state is "extract_details"
+        # Call the extract_details function when on the 'extract_details' page
         extract_details()
 
     elif st.session_state.page == "ask_questions":
-        # Call the ask_questions function when the page state is "ask_questions"
+        # Call the ask_questions function when on the 'ask_questions' page
         ask_questions(st.session_state.overview_text)
 
     elif st.session_state.page == "report":
-        # Call the report function when the page state is "report"
+        # Call the report function when on the 'report' page
         report(st.session_state.total_chat_history)

@@ -5,17 +5,32 @@ from pydantic import BaseModel
 from components.call_gpt import call_gpt
 from pages.ask_questions import ask_questions
 
-# Function to extract text from PDF
+
+# Function to extract text from the uploaded PDF
 def extract_text_from_pdf(pdf_file):
+    """
+    Extracts text content from the given PDF file.
+    Args:
+        pdf_file: The uploaded PDF file from which text is to be extracted.
+    Returns:
+        A string containing the extracted text from all the pages of the PDF.
+    """
     pdf_reader = PyPDF2.PdfReader(pdf_file)
     text = ""
     for page_num in range(len(pdf_reader.pages)):
         text += pdf_reader.pages[page_num].extract_text()
     return text
 
-# Function to extract resume details using OpenAI API
-def analyse_resume_details(resume_text):
 
+# Function to analyze resume details using OpenAI API
+def analyse_resume_details(resume_text):
+    """
+    Analyzes the resume text using the OpenAI API to extract key details.
+    Args:
+        resume_text: The full resume text extracted from the uploaded PDF.
+    Returns:
+        A dictionary containing key details extracted from the resume (full name, email, phone, etc.).
+    """
     class ResumeAnalysis(BaseModel):
         is_resume: bool
         full_name: str
@@ -51,7 +66,16 @@ def analyse_resume_details(resume_text):
     }
     return resume_dict
 
+
+# Function to create a concise overview from the resume details
 def create_overview(resume_dict):
+    """
+    Creates a concise overview of the candidate based on the extracted resume details.
+    Args:
+        resume_dict: A dictionary containing the extracted details from the resume.
+    Returns:
+        An object containing the overview text summarizing the candidate's profile.
+    """
     class Overview(BaseModel):
         overview: str
 
@@ -67,13 +91,20 @@ def create_overview(resume_dict):
 
     return call_gpt(system_message, user_message, outputStructure=Overview)
 
+
+# Function to handle the extraction of details from resume or manual form submission
 def extract_details():
+    """
+    Handles the user interaction for submitting their resume or filling out the form manually.
+    Guides the user through uploading their resume, extracting the details, and submitting the form.
+    """
     # Initialize session state if it is not set
     overview_text = ""
 
     if "page" not in st.session_state:
         st.session_state.page = "extract_details"  # Default page
 
+    # Page content for resume extraction or manual form input
     if st.session_state.page == "extract_details":
         st.title("Step 1: Submit Your Details")
 
@@ -86,22 +117,23 @@ def extract_details():
         uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
         if uploaded_file is not None:
-            # Display loading screen
+            # Display loading spinner while analyzing resume
             with st.spinner("Analyzing... This may take a moment."):
                 resume_text = extract_text_from_pdf(uploaded_file)
 
+                # Handle case when resume text is too short or too long
                 if len(resume_text) < 100:
                     st.error("The uploaded file does not contain enough text to be a valid resume. Please upload a different file.")
                 elif len(resume_text) > 10000:
                     st.error("The uploaded file contains too much text to be processed. Please upload a shorter resume.")
                 else:
-                    # Proceed with analyzing resume details
+                    # Proceed with analyzing the extracted resume details
                     resume_dict = analyse_resume_details(resume_text)
 
-                    # Ensure the blocking spinner is removed after analysis
+                    # Show success message after successful analysis
                     st.success("Analysis complete!")
                     
-                    # Extract details from the resume analysis result
+                    # Collect candidate details for display in form
                     full_name = resume_dict["full_name"]
                     email_address = resume_dict["email_address"]
                     phone_number = resume_dict["phone_number"]
@@ -111,7 +143,7 @@ def extract_details():
                     tech_stack = resume_dict["tech_stack"]
                     other_details = resume_dict["other_details"]
 
-                    # Collecting candidate details
+                    # Create a form layout to collect further details
                     col1, col2, col3 = st.columns(3)
                     with col1:
                         full_name = st.text_input("Full Name", value=full_name)
@@ -140,7 +172,7 @@ def extract_details():
             </h3>
             """, unsafe_allow_html=True)
 
-            # Collecting candidate details
+            # Manual form for candidate details
             col1, col2, col3 = st.columns(3)
             with col1:
                 full_name = st.text_input("Full Name", value="")
@@ -160,24 +192,25 @@ def extract_details():
             tech_stack = st.text_area("Tech Stack", value="")
             other_details = st.text_area("Other Details", value="")
 
-        # Submit button
+        # Submit button logic
         if st.button("Submit", key="submit_button"):
             if all([full_name.strip(), email_address.strip(), phone_number.strip(), years_of_experience.strip(), desired_position.strip(), current_location.strip(), tech_stack.strip(), other_details.strip()]):
                 with st.spinner("Creating Short Overview of your details..."):
                     resume_dict = {
-                    "full_name": full_name,
-                    "email_address": email_address,
-                    "phone_number": phone_number,
-                    "years_of_experience": years_of_experience,
-                    "desired_position": desired_position,
-                    "current_location": current_location,
-                    "tech_stack": tech_stack,
-                    "other_details": other_details
+                        "full_name": full_name,
+                        "email_address": email_address,
+                        "phone_number": phone_number,
+                        "years_of_experience": years_of_experience,
+                        "desired_position": desired_position,
+                        "current_location": current_location,
+                        "tech_stack": tech_stack,
+                        "other_details": other_details
                     }
                     overview_text = create_overview(resume_dict)
-                # After the form is submitted, update the session state and redirect
-                st.session_state.page = "ask_questions"  # Redirect to the next page
-                st.session_state.overview_text = overview_text.overview  # Store the overview in session state
+                
+                # After submission, store overview in session and rerun to navigate to the next page
+                st.session_state.page = "ask_questions"  # Redirect to next step
+                st.session_state.overview_text = overview_text.overview  # Store the overview text in session state
                 st.rerun()  # Rerun to switch pages
             else:
                 st.error("Please fill out all fields before submitting.")
