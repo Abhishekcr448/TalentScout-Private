@@ -1,13 +1,14 @@
+import subprocess
+
+# Install pydantic if not already installed
+subprocess.run(["pip", "install", "pydantic"])
+
 import streamlit as st
 from pages.ask_questions import ask_questions
 from pages.extract_details import extract_details
 from pages.report import report
 from components.call_gpt import check_gpt
 import os
-import subprocess
-
-# Install pydantic if not already installed
-subprocess.run(["pip", "install", "pydantic"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
