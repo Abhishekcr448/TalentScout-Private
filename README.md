@@ -1,5 +1,7 @@
 # TalentScout-Private
 
+## Try now: [talentscout-app-abhishekcr448](https://talentscout-app-abhishekcr448.streamlit.app/)
+
 ## Hiring Assistant Chatbot
 
 ### Project Overview
